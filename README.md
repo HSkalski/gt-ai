@@ -2,8 +2,8 @@
 
 Driving AI for GTA V
 
-#Prerequisites 
+# Prerequisites 
 python 3.6.6
 
-##openCV
+## openCV
 pip instll opencv-python
