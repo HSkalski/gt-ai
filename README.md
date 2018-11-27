@@ -10,7 +10,3 @@ GTA trainer: https://www.gta5-mods.com/scripts/simple-trainer-for-gtav
 pip install opencv-python
 
 # Git Workflow Standards
-
-
-
-TEST FOR MERGE
