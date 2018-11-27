@@ -11,6 +11,3 @@ pip install opencv-python
 
 # Git Workflow Standards
 
-
-
-TEST FOR MERGE
