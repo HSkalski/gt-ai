@@ -11,3 +11,4 @@ GTA trainer: https://www.gta5-mods.com/scripts/simple-trainer-for-gtav
 pip install opencv-python
 
 # Git Workflow Standards
+https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow
