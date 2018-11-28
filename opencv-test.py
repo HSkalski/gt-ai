@@ -16,7 +16,7 @@ def record():
         img = np.asarray(sct.grab(mon))
 
         dt = time.time() - last_time
-        print('test')
+        print(dt)
 
         last_time = time.time()
         cv2.imshow("test",img)
