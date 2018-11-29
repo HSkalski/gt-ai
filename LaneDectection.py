@@ -8,7 +8,7 @@ sct = mss.mss()
 def main():
     while 1:
         img = screen_grab()
-        
+        processedImg = process_img(img)
         cv2.imshow("Lane Detection", img)
         if cv2.waitKey(25) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
@@ -20,11 +20,15 @@ def screen_grab():
     return img
 
 
-#def process_img():
-
+def process_img(img):
+    processedImg = img
+    
     #Set region of intrest
+    
 
     #Contour Scan
 
+
+    return processedImg
 
 main()
