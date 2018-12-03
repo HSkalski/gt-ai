@@ -11,7 +11,7 @@ def main():
         processedImg = process_img(img)
         cv2.imshow("Original IMG", img)
         #cv2.imshow("Processed IMG", processedImg)
-        if cv2.waitKey(25) & 0xFF == ord('q'):
+        if cv2.waitKey(25) & 0xFF == ord('q'): #if pressing q 
             cv2.destroyAllWindows()
             break
 
@@ -30,11 +30,15 @@ def process_img(img):
     #Contour Scan
     imgray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     ret,thresh = cv2.threshold(imgray,127,255,0)
-    img2, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-    cv2.imshow("Contours", img2)
-    #Line processing?
-    edges = cv2.Canny(img2,50,150)
-    cv2.imshow("Canny Edges", edges)
+    imgcontour, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    cv2.imshow("Contours", imgcontour)
+
+    #Canny Scan
+    imgedges = cv2.Canny(imgcontour,50,150)
+    cv2.imshow("Canny Edges", imgedges)
+
+    #Line Processing?
+
 
     #return processedImg
     return img
