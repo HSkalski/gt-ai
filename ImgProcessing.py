@@ -60,9 +60,13 @@ def process_img(img):
 
     ### create mask
     mask = cv2.inRange(hsv,lower_gray,upper_gray)
+    
+    ### invert mask
+    mask = cv2.bitwise_not(mask)
 
     ### Bitwise-AND mask with original image
     res = cv2.bitwise_and(img,img,mask = mask)
+
     cv2.imshow('masked',res)
     cv2.imshow('mask',mask)
 
@@ -71,7 +75,7 @@ def process_img(img):
     y = cv2.getTrackbarPos('y','Contours')
     z = cv2.getTrackbarPos('z','Contours')
 
-    imgray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    imgray = cv2.cvtColor(res,cv2.COLOR_BGR2GRAY)
 
     #ret,thresh = cv2.threshold(imgray,127,255,0)
     ret,thresh = cv2.threshold(imgray,  x,  y, 0)
@@ -98,3 +102,10 @@ def process_img(img):
 
 
 main()
+
+
+#        Notes on working values
+#   mask: low: 0, high: 200
+#   Contours: 160, 255
+#
+#
