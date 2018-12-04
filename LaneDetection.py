@@ -26,10 +26,24 @@ def process_img(img):
     
     #Set region of intrest
     
+    #### Mask ###
+    # convert to hsv
+    hsv = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
+    # upper / lower bounds
+    lower_gray = np.array([0,0,0])
+    upper_gray = np.array([200,200,200])
+    # create mask
+    mask = cv2.inRange(hsv,lower_gray,upper_gray)
+    # invert mask
+    mask = cv2.bitwise_not(mask)
+    # Bitwise-AND mask with image
+    res = cv2.bitwise_and(img,img,mask = mask)
+    
+    cv2.imshow('res',res)
 
     #Contour Scan
-    imgray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-    ret,thresh = cv2.threshold(imgray,127,255,0)
+    imgray = cv2.cvtColor(res,cv2.COLOR_BGR2GRAY)
+    ret,thresh = cv2.threshold(imgray,160,255,0)
     imgcontour, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     cv2.imshow("Contours", imgcontour)
 
