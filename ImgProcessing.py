@@ -9,15 +9,14 @@ monitor = {"top": 40, "left": 0, "width": 800, "height": 640}
 sct = mss.mss()
 
 #Create Trackbars for contours
-cv2.namedWindow('Contours')
-cv2.createTrackbar('x','Contours',0,255,nothing)
-cv2.createTrackbar('y','Contours',0,255,nothing)
-cv2.createTrackbar('z','Contours',0,255,nothing)
+cv2.namedWindow('contour')
+cv2.createTrackbar('x','contour',0,255,nothing)
+cv2.createTrackbar('y','contour',0,255,nothing)
 
 #Canny trackbars
-cv2.namedWindow('Canny Edges')
-cv2.createTrackbar('a','Canny Edges',0,255,nothing)
-cv2.createTrackbar('b','Canny Edges',0,255,nothing)
+cv2.namedWindow('canny')
+cv2.createTrackbar('a','canny',0,255,nothing)
+cv2.createTrackbar('b','canny',0,255,nothing)
 
 ###Create Trackbars for contours
 cv2.namedWindow('mask')
@@ -49,6 +48,37 @@ def process_img(img):
     
     #Set region of intrest
     
+    ##Blur
+    blur = cv2.blur(img,(3,3))
+    cv2.imshow('blur 1', blur)
+    # Canny
+    canny = CannyScan(blur)
+    cv2.imshow('canny',canny)
+    # second blur
+    blur2 = cv2.blur(canny,(3,3))
+    cv2.imshow('blur 2',blur2)
+    # contour
+    contour = ContourScan(blur2)
+    cv2.imshow('contour',contour)
+
+    # mask = MaskScan(img)
+    # cv2.imshow('mask',mask)
+    # contour = ContourScan(mask)
+    # cv2.imshow('contour',contour)
+    # canny = CannyScan(contour)
+    # cv2.imshow('canny',canny)
+
+    
+    #Line Processing?
+
+
+    #return processedImg
+    return img
+
+
+
+def MaskScan(img):
+
     ### Set Color space 
     hsv = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
 
@@ -57,7 +87,7 @@ def process_img(img):
     high = cv2.getTrackbarPos('high','mask')
     lower_gray = np.array([low,low,low])
     upper_gray = np.array([high,high,high])
-
+    
     ### create mask
     mask = cv2.inRange(hsv,lower_gray,upper_gray)
     
@@ -67,38 +97,33 @@ def process_img(img):
     ### Bitwise-AND mask with original image
     res = cv2.bitwise_and(img,img,mask = mask)
 
-    cv2.imshow('masked',res)
-    cv2.imshow('mask',mask)
+    return res
 
+def ContourScan(img):
     #Contour Scan
-    x = cv2.getTrackbarPos('x','Contours')
-    y = cv2.getTrackbarPos('y','Contours')
-    z = cv2.getTrackbarPos('z','Contours')
+    x = cv2.getTrackbarPos('x','contour')
+    y = cv2.getTrackbarPos('y','contour')
 
-    imgray = cv2.cvtColor(res,cv2.COLOR_BGR2GRAY)
+    imgray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
     #ret,thresh = cv2.threshold(imgray,127,255,0)
     ret,thresh = cv2.threshold(imgray,  x,  y, 0)
     
     imgcontour, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-    cv2.imshow("Contours", imgcontour)
 
+    return imgcontour
+
+def CannyScan(img):
     #Canny Scan
 
-    a = cv2.getTrackbarPos('a','Canny Edges')
-    b = cv2.getTrackbarPos('b','Canny Edges')
+    a = cv2.getTrackbarPos('a','canny')
+    b = cv2.getTrackbarPos('b','canny')
 
     #imgedges = cv2.Canny(imgcontour,50,150)
-    imgedges = cv2.Canny(imgcontour, a, b, apertureSize = 7)
+    if img:
+        imgedges = cv2.Canny(img, a, b)
 
-    cv2.imshow("Canny Edges", imgedges)
-
-    #Line Processing?
-
-
-    #return processedImg
-    return img
-
+    return imgedges
 
 
 main()
