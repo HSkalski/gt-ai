@@ -31,7 +31,7 @@ def main():
 
     while 1:
         
-        img = cv2.imread('gtaStill.jpg')
+        img = cv2.imread('desertroad.jpg')
         img = cv2.resize(img,(800,600),interpolation = cv2.INTER_CUBIC)
 
         processedImg = process_img(img)
@@ -48,17 +48,18 @@ def process_img(img):
     
     #Set region of intrest
     
+    img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     ##Blur
-    blur = cv2.blur(img,(3,3))
+    blur = cv2.blur(img,(5,5))
     cv2.imshow('blur 1', blur)
     # Canny
     canny = CannyScan(blur)
     cv2.imshow('canny',canny)
     # second blur
-    blur2 = cv2.blur(canny,(3,3))
-    cv2.imshow('blur 2',blur2)
+    #blur2 = cv2.blur(canny,(3,3))
+    #cv2.imshow('blur 2',blur2)
     # contour
-    contour = ContourScan(blur2)
+    contour = ContourFromCannyScan(canny)
     cv2.imshow('contour',contour)
 
     # mask = MaskScan(img)
@@ -104,7 +105,7 @@ def ContourScan(img):
     x = cv2.getTrackbarPos('x','contour')
     y = cv2.getTrackbarPos('y','contour')
 
-    imgray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    #imgray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
     #ret,thresh = cv2.threshold(imgray,127,255,0)
     ret,thresh = cv2.threshold(imgray,  x,  y, 0)
@@ -113,6 +114,21 @@ def ContourScan(img):
 
     return imgcontour
 
+def ContourFromCannyScan(img):
+    #Contour Scan
+    x = cv2.getTrackbarPos('x','contour')
+    y = cv2.getTrackbarPos('y','contour')
+
+    #imgray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+
+    #ret,thresh = cv2.threshold(imgray,127,255,0)
+    #ret,thresh = cv2.threshold(imgray,  x,  y, 0)
+    
+    imgcontour, contours, hierarchy = cv2.findContours(img,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
+    return imgcontour
+
+
 def CannyScan(img):
     #Canny Scan
 
@@ -120,13 +136,17 @@ def CannyScan(img):
     b = cv2.getTrackbarPos('b','canny')
 
     #imgedges = cv2.Canny(imgcontour,50,150)
-    if img:
-        imgedges = cv2.Canny(img, a, b)
+    imgedges = cv2.Canny(img, a, b)
 
     return imgedges
 
 
 main()
+
+
+
+
+
 
 
 #        Notes on working values
