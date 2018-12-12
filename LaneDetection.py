@@ -53,6 +53,13 @@ def process_img(img):
     
 
     #Line Processing?
+    minLineLength = 50
+    maxLineGap = 10
+    lines = cv2.HoughLinesP(imgedges,1,np.pi/180,100,minLineLength,maxLineGap)
+    print(len(lines))
+    for x1,y1,x2,y2 in lines[0]:
+        cv2.line(img,(x1,y1),(x2,y2),(0,255,0),2)
+
 
 
     #return processedImg
