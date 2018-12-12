@@ -1,9 +1,18 @@
 import cv2
 import numpy as np 
 import mss 
+import random as rand
 
 monitor = {"top": 40, "left": 0, "width": 800, "height": 640}
 sct = mss.mss()
+
+
+# def nothing(x): #function that does nothing to satisfy trackbar
+#     pass
+# #Canny trackbars
+# cv2.namedWindow('Canny Edges')
+# cv2.createTrackbar('a','Canny Edges',0,1000,nothing)
+# cv2.createTrackbar('b','Canny Edges',0,1000,nothing)
 
 def main():
     while 1:
@@ -15,53 +24,52 @@ def main():
             cv2.destroyAllWindows()
             break
 
+def roi(img, vertices):
+    mask = np.zeros_like(img)
+    cv2.fillPoly(mask, vertices, 255)
+    masked = cv2.bitwise_and(img, mask)
+    return masked
 
 def screen_grab():
     img = np.asarray(sct.grab(monitor))
     return img
 
+def draw_lines(img, lines):
+    try:
+        for line in lines:
+            loc = line[0]
+            cv2.line(img, (loc[0],loc[1]) , (loc[2],loc[3]) , [255,0,0] , 3 )
+    except:
+        print("no lines found")
 
 def process_img(img):
     #processedImg = img
-    blur = cv2.blur(img,(5,5))
     
-    imgray = cv2.cvtColor(blur,cv2.COLOR_BGR2GRAY)
-    cv2.imshow("graybulr",imgray)
-    #Set region of intrest
-    
-    # #Mask
-    # ### Set Color space 
-    # #######hsv = cv2.cvtColor(imgray,cv2.COLOR_RGB2HSV)
-    # ### create mask
-    # lower_gray = np.array([0])
-    # upper_gray = np.array([200])
-    # mask = cv2.inRange(imgray,lower_gray,upper_gray)
-    # ### invert mask
-    # mask = cv2.bitwise_not(mask)
-    # cv2.imshow("mask",mask)
-    # ### Bitwise-AND mask with original image
-    # res = cv2.bitwise_and(img,img,mask = mask)
-
+    #grayscale
+    imgray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     #Canny Scan
-    imgedges = cv2.Canny(imgray,50,150)
-    cv2.imshow("Canny Edges", imgedges)
+    imgedges = cv2.Canny(imgray,  200,300)
+    #imgedges = cv2.Canny(imgray, cv2.getTrackbarPos('a','Canny Edges'), cv2.getTrackbarPos('b','Canny Edges'))
+    #Blur
+    blur = cv2.blur(imgedges,(5,5))
+    #region of interest
+    vertices = np.array([[10,500],[10,300], [300,200], [500,200], [800,300], [800,500]], np.int32)
+    imgroi = roi(blur, [vertices])
 
-    #Contour Scan
-    imgcontour, contours, hierarchy = cv2.findContours(imgedges,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-    cv2.imshow("Contours", imgcontour)
+    cv2.line(img, (10,500),(10,300), [0,255,0], 3)
+    cv2.line(img, (300,200),(10,300), [0,255,0], 3)
+    cv2.line(img, (300,200),(500,200), [0,255,0], 3)
+    cv2.line(img, (500,200),(800,300), [0,255,0], 3)
+    cv2.line(img, (800,300),(800,500), [0,255,0], 3)
+    cv2.line(img, (800,500),(10,500), [0,255,0], 3)
 
+    #Lines
+    lines = cv2.HoughLinesP(imgroi, 1, np.pi/180, 180, 20, 15)
+    draw_lines(img,lines)
     
-
-    #Line Processing?
-    minLineLength = 50
-    maxLineGap = 10
-    lines = cv2.HoughLinesP(imgedges,1,np.pi/180,100,minLineLength,maxLineGap)
-    print(len(lines))
-    for x1,y1,x2,y2 in lines[0]:
-        cv2.line(img,(x1,y1),(x2,y2),(0,255,0),2)
-
-
-
+    cv2.imshow("graybulr",blur)
+    cv2.imshow("Canny Edges", imgedges)
+    cv2.imshow("Region of Interest", imgroi)
     #return processedImg
     return img
 
