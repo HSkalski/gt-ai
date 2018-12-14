@@ -3,6 +3,7 @@ import numpy as np
 import mss 
 import random as rand
 from statistics import median
+from statistics import mean
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
@@ -20,8 +21,8 @@ cv2.createTrackbar('a','Canny Edges',0,1000,nothing)
 cv2.createTrackbar('b','Canny Edges',0,1000,nothing)
 
 def main():
-    lane1 = [0,0,0,0]
-    lane2 = [0,0,0,0]   
+    lane1 = [0,0]
+    lane2 = [0,0]   
     while 1:
         img = screen_grab()
         processedImg,lane1,lane2 = process_img(img,lane1,lane2)
@@ -48,13 +49,19 @@ def screen_grab():
     img = np.asarray(sct.grab(monitor))
     return img
 
+def draw_eq(img,lane):
+    try:
+        cv2.line(img, (0,int(lane[1])), (800,int(lane[0]*800+lane[1])),[255,255,255],5)
+    except Exception as e:
+        print("Not drawing equation: ", str(e))
+
 def draw_lines(img, lines):
     try:
         for line in lines:
             loc = line[0]
             m = slope(loc)
             if m > 0:
-                cv2.line(img, (loc[0],loc[1]) , (loc[2],loc[3]) , [255,0,0] , 1 )
+                cv2.line(img, (loc[0],loc[1]) , (loc[2],loc[3]) , [255] , 1 )
             else:
                 cv2.line(img, (loc[0],loc[1]) , (loc[2],loc[3]) , [0,0,255] , 1 )
     except:
@@ -167,6 +174,44 @@ def draw_lanes(img, lines):
         for i,line in enumerate(left_lines):
             if line[1] > maxLint or line[1] < minLint:
                 left_lines.pop(i)
+        # Average of remaining lines - slope
+        avgRms = []
+        avgLms = []
+        avgRm = 0
+        avgLm = 0
+        try:
+            for line in right_lines:
+                avgRms.append(line[0])
+            avgRm = mean(avgRms)
+            print("Right Average Slope: ", avgRm)
+        except:
+            pass
+        try:
+            for line in left_lines:
+                avgLms.append(line[0])
+            avgLm = mean(avgLms)
+            print("Left Average Slope: ", avgLm)
+        except:
+            pass
+        # Average of remaining lines - intercept
+        avgRints = []
+        avgLints = []
+        avgRint = 0
+        avgLint = 0
+        try:
+            for line in right_lines:
+                avgRints.append(line[1])
+            avgRint = median(avgRints)
+            print("Right Average Slope: ", avgRint)
+        except:
+            pass
+        try:
+            for line in left_lines:
+                avgLints.append(line[1])
+            avgLint = median(avgLints)
+            print("Left Average Slope: ", avgLint)
+        except:
+            pass
         ######################
         print("Right Len: ", len(right_lines))
         print("Left Len: ", len(left_lines))
@@ -194,46 +239,24 @@ def draw_lanes(img, lines):
         # find max Xs and Ys to use as lane
         ##right lane
         try:
-            Rxs = []
-            Rys = []
-            for line in right_lines:
-                Rxs.append(line[2])
-                Rxs.append(line[4])
-                Rys.append(line[3])
-                Rys.append(line[5])
-            maxRx = max(Rxs)
-            maxRy = max(Rys)
-            minRx = min(Rxs)
-            minRy = min(Rys)
-            laneR = [minRx,minRy,maxRx,maxRy]
+            laneR = [avgRm,avgRint]
         except:
             print("Final Right Lane")
         ##left lane
         try:
-            Lxs = []
-            Lys = []
-            for line in left_lines:
-                Lxs.append(line[2])
-                Lxs.append(line[4])
-                Lys.append(line[3])
-                Lys.append(line[5])
-            maxLx = max(Lxs)
-            maxLy = max(Lys)
-            minLx = min(Lxs)
-            minLy = min(Lys)
-            laneL = [minLx,maxLy,maxLx,minLy]
+            laneL = [avgLm,avgLint]
         except:
             print("Final Left Lane")
         print("Return: ",laneR,laneL)
         if laneR == []:
-            laneR = [0,0,0,0]
+            laneR = [0,0]
         if laneL == []:
-            laneL = [0,0,0,0]
+            laneL = [0,0]
 
         return laneR, laneL
     except Exception as e:
         print("Draw_lanes: ", str(e))
-        return [0,0,0,0],[0,0,0,0]
+        return [0,0],[0,0]
         
 
 def process_img(img,lane1,lane2):
@@ -268,9 +291,9 @@ def process_img(img,lane1,lane2):
     lines = cv2.HoughLinesP(imgCrop, 1, np.pi/180, 180, minLineLength, maxLineGap)
     draw_lines(img,lines)
     newlane1,newlane2 = draw_lanes(img,lines)
-    if newlane1 != [0,0,0,0]:
+    if newlane1 != [0,0]:
         lane1 = newlane1
-    if newlane2 != [0,0,0,0]:
+    if newlane2 != [0,0]:
         lane2 = newlane2
 
     
@@ -282,12 +305,16 @@ def process_img(img,lane1,lane2):
     print("------------------------")
     try:
         #right
-        cv2.line(img,(lane1[0],lane1[1]),(lane1[2],lane1[3]),[0,255,255], 2)
+        #cv2.line(img,(lane1[0],lane1[1]),(lane1[2],lane1[3]),[0,255,255], 3)
+        #temporary
+        draw_eq(img,lane1)
     except:
         print("No new Right Lane to print: main()")
     try:
         #left
-        cv2.line(img,(lane2[0],lane2[1]),(lane2[2],lane2[3]),[255,0,100], 2)
+        #cv2.line(img,(lane2[0],lane2[1]),(lane2[2],lane2[3]),[255,0,100], 3)
+        #temporary
+        draw_eq(img,lane2)
     except:
         print("No new Left Lane to print: main()")
     
