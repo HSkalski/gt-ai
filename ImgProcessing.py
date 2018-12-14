@@ -67,6 +67,11 @@ def draw_lines(img, lines):
     except:
         print("no lines found")
 
+def draw_eq(img,lane):
+    try:
+        cv2.line(img, (0,int(lane[1])), (800,int(lane[0]*800+lane[1])),[255,255,255],5)
+    except Exception as e:
+        print("Not drawing equation /\/\/\/\/\//::", str(e))
 #
 # y = mx+b
 # y = slope x + yint
@@ -214,6 +219,8 @@ def draw_lanes(img, lines):
             minRx = min(Rxs)
             minRy = min(Rys)
             laneR = [minRx,minRy,maxRx,maxRy]
+            #temporary__________________________
+            laneR = [medRm,medRint,0,0]
         except:
             print("Final Right Lane")
         ##left lane
@@ -230,6 +237,8 @@ def draw_lanes(img, lines):
             minLx = min(Lxs)
             minLy = min(Lys)
             laneL = [minLx,maxLy,maxLx,minLy]
+            #temporary__________________________
+            laneL = [medLm,medLint,0,0]
         except:
             print("Final Left Lane")
         print("Return: ",laneR,laneL)
@@ -255,7 +264,7 @@ def process_img(img,lane1,lane2):
     #Blur
     blur = cv2.blur(imgedges,(5,5))
     #region of interest
-    points = [[10,500],[10,400],[350,200],[450,200],[790,400],[790,500]]
+    points = [[10,590],[10,400],[350,200],[450,200],[790,400],[790,590]]
 
 
     roiVertices = np.array([points[0],points[1], points[2], points[3], points[4], points[5]], np.int32)
@@ -290,12 +299,16 @@ def process_img(img,lane1,lane2):
     print("------------------------")
     try:
         #right
-        cv2.line(img,(lane1[0],lane1[1]),(lane1[2],lane1[3]),[0,255,255], 3)
+        #cv2.line(img,(lane1[0],lane1[1]),(lane1[2],lane1[3]),[0,255,255], 3)
+        #temporary
+        draw_eq(img,lane1)
     except:
         print("No new Right Lane to print: main()")
     try:
         #left
-        cv2.line(img,(lane2[0],lane2[1]),(lane2[2],lane2[3]),[255,0,100], 3)
+        #cv2.line(img,(lane2[0],lane2[1]),(lane2[2],lane2[3]),[255,0,100], 3)
+        #temporary
+        draw_eq(img,lane2)
     except:
         print("No new Left Lane to print: main()")
     
