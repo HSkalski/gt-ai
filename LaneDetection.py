@@ -247,7 +247,7 @@ def process_img(img,lane1,lane2):
     #Blur
     blur = cv2.blur(imgedges,(5,5))
     #region of interest
-    points = [[10,500],[10,400],[350,200],[450,200],[790,400],[790,500]]
+    points = [[10,590],[10,400],[350,200],[450,200],[790,400],[790,590]]
 
 
     roiVertices = np.array([points[0],points[1], points[2], points[3], points[4], points[5]], np.int32)
