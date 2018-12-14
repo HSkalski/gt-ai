@@ -8,6 +8,8 @@ monitor = {"top": 40, "left": 0, "width": 800, "height": 640}
 sct = mss.mss()
 
 
+
+
 # def nothing(x): #function that does nothing to satisfy trackbar
 #     pass
 # #Canny trackbars
@@ -16,9 +18,11 @@ sct = mss.mss()
 # cv2.createTrackbar('b','Canny Edges',0,1000,nothing)
 
 def main():
+    lane1 = [0,0,0,0]
+    lane2 = [0,0,0,0]   
     while 1:
         img = screen_grab()
-        processedImg = process_img(img)
+        processedImg,lane1,lane2 = process_img(img,lane1,lane2)
         cv2.imshow("Original IMG", img)
         #cv2.imshow("Processed IMG", processedImg)
         if cv2.waitKey(25) & 0xFF == ord('q'): #if pressing q 
@@ -88,15 +92,17 @@ def draw_lanes(img, lines):
                     b = Yint(xyxy)
                     line_dict[count] = [m, b, x1, y1, x2, y2]
 
-        # separate positive vs negative slopes
+        # separate positive vs negative slopes while skipping small slopes
         for i in line_dict:
-            if line_dict[i][0] > 0: # slope > 0 >>----> right
+            if line_dict[i][0] > 0.1: # slope > 0 >>----> right
                 right_lines.append(line_dict[i])
-            else: # slope <= 0 >>----> left
+            elif line_dict[i][0] < -0.1: # slope <= 0 >>----> left
                 left_lines.append(line_dict[i])
+            else:
+                pass
+
 
         # median slopes
-        
         rms = [] #right slopes
         lms = [] #left slopes
         medRm = 0 #median right slope
@@ -117,18 +123,35 @@ def draw_lanes(img, lines):
             print("No Left Lines")
 
         # remove outliers 
-        maxRm = medRm + (medRm*0.01) # max and min left and right slopes
-        minRm = medRm - (medRm*0.01)
-        maxLm = medLm - (medLm*0.01)
-        minLm = medLm + (medLm*0.01)
+        maxRm = medRm + (medRm*0.1) # max and min left and right slopes
+        minRm = medRm - (medRm*0.1)
+        maxLm = medLm - (medLm*0.1)
+        minLm = medLm + (medLm*0.1)
         for i,line in enumerate(right_lines): # pop if out of range
             if line[0] > maxRm or line[0] < minRm:
                 right_lines.pop(i)
+                #print("takin care of buisness RIGHT")
 
         for i,line in enumerate(left_lines):
             if line[0] > maxLm or line[0] < minLm:
                 left_lines.pop(i)
-
+                #print("takin care of buisness LEFT")
+        
+        ######################
+        print("Right Len: ", len(right_lines))
+        print("Left Len: ", len(left_lines))
+        
+        try:
+            for loc in left_lines:
+                cv2.line(img, (loc[2],loc[3]) , (loc[4],loc[5]) , [0,165,255] , 1 )
+        except:
+            print("error showing left lines")
+        try:
+            for loc in right_lines:
+                cv2.line(img, (loc[2],loc[3]) , (loc[4],loc[5]) , [0,165,255] , 1 )
+        except:
+            print("error showing right lines")
+        ######################
         # find max Xs and Ys to use as lane
         ##right lane
         try:
@@ -168,6 +191,11 @@ def draw_lanes(img, lines):
         # print("----------------------------")
         # for m in lms:
         #     print(m)
+        print("Return: ",laneR,laneL)
+        if laneR == []:
+            laneR = [0,0,0,0]
+        if laneL == []:
+            laneL = [0,0,0,0]
 
         return laneR, laneL
     except Exception as e:
@@ -175,7 +203,7 @@ def draw_lanes(img, lines):
         return [0,0,0,0],[0,0,0,0]
         
 
-def process_img(img):
+def process_img(img,lane1,lane2):
     #processedImg = img
     
     #grayscale
@@ -186,38 +214,53 @@ def process_img(img):
     #Blur
     blur = cv2.blur(imgedges,(5,5))
     #region of interest
-    vertices = np.array([[10,500],[10,300], [300,200], [500,200], [800,300], [800,500]], np.int32)
+    points = [[10,500],[10,400],[350,200],[450,200],[790,400],[790,500]]
+
+
+    vertices = np.array([points[0],points[1], points[2], points[3], points[4], points[5]], np.int32)
     imgroi = roi(blur, [vertices])
 
-    cv2.line(img, (10,500),(10,300), [0,255,0], 3)
-    cv2.line(img, (300,200),(10,300), [0,255,0], 3)
-    cv2.line(img, (300,200),(500,200), [0,255,0], 3)
-    cv2.line(img, (500,200),(800,300), [0,255,0], 3)
-    cv2.line(img, (800,300),(800,500), [0,255,0], 3)
-    cv2.line(img, (800,500),(10,500), [0,255,0], 3)
+    cv2.line(img, (points[0][0],points[0][1]),(points[1][0],points[1][1]), [0,255,0], 3)
+    cv2.line(img, (points[1][0],points[1][1]),(points[2][0],points[2][1]), [0,255,0], 3)
+    cv2.line(img, (points[2][0],points[2][1]),(points[3][0],points[3][1]), [0,255,0], 3)
+    cv2.line(img, (points[3][0],points[3][1]),(points[4][0],points[4][1]), [0,255,0], 3)
+    cv2.line(img, (points[4][0],points[4][1]),(points[5][0],points[5][1]), [0,255,0], 3)
+    cv2.line(img, (points[5][0],points[5][1]),(points[0][0],points[0][1]), [0,255,0], 3)
 
     #Lines
     minLineLength = 30 # 20
     maxLineGap = 15  #15
     lines = cv2.HoughLinesP(imgroi, 1, np.pi/180, 180, minLineLength, maxLineGap)
     draw_lines(img,lines)
-    lane1,lane2 = draw_lanes(img,lines)
+    newlane1,newlane2 = draw_lanes(img,lines)
+    if newlane1 != [0,0,0,0]:
+        lane1 = newlane1
+    if newlane2 != [0,0,0,0]:
+        lane2 = newlane2
+
+    
+    print("------------------------")
+    print(lane1)
+    print(lane2)
+    print(newlane1)
+    print(newlane2)
+    print("------------------------")
     try:
         #right
-        cv2.line(img,(lane1[0],lane1[1]),(lane1[2],lane1[3]),[0,255,255], 3)
+        cv2.line(img,(lane1[0],lane1[1]),(lane1[2],lane1[3]),[0,255,255], 2)
     except:
-        print("No Right Lane to print: main()")
+        print("No new Right Lane to print: main()")
     try:
         #left
-        cv2.line(img,(lane2[0],lane2[1]),(lane2[2],lane2[3]),[255,0,100], 3)
+        cv2.line(img,(lane2[0],lane2[1]),(lane2[2],lane2[3]),[255,0,100], 2)
     except:
-        print("No Left Lane to print: main()")
+        print("No new Left Lane to print: main()")
     
 
     cv2.imshow("graybulr",blur)
     cv2.imshow("Canny Edges", imgedges)
     cv2.imshow("Region of Interest", imgroi)
     #return processedImg
-    return img
+    return img, lane1, lane2
 
 main()
