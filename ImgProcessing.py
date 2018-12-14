@@ -288,16 +288,16 @@ def process_img(img,lane1,lane2):
     print(newlane1)
     print(newlane2)
     print("------------------------")
-    # try:
-    #     #right
-    #     cv2.line(img,(lane1[0],lane1[1]),(lane1[2],lane1[3]),[0,255,255], 3)
-    # except:
-    #     print("No new Right Lane to print: main()")
-    # try:
-    #     #left
-    #     cv2.line(img,(lane2[0],lane2[1]),(lane2[2],lane2[3]),[255,0,100], 3)
-    # except:
-    #     print("No new Left Lane to print: main()")
+    try:
+        #right
+        cv2.line(img,(lane1[0],lane1[1]),(lane1[2],lane1[3]),[0,255,255], 3)
+    except:
+        print("No new Right Lane to print: main()")
+    try:
+        #left
+        cv2.line(img,(lane2[0],lane2[1]),(lane2[2],lane2[3]),[255,0,100], 3)
+    except:
+        print("No new Left Lane to print: main()")
     
 
     cv2.imshow("graybulr",blur)
