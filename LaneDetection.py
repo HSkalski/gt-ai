@@ -39,7 +39,11 @@ def draw_lines(img, lines):
     try:
         for line in lines:
             loc = line[0]
-            cv2.line(img, (loc[0],loc[1]) , (loc[2],loc[3]) , [255,0,0] , 3 )
+            m = slope(loc)
+            if m > 0:
+                cv2.line(img, (loc[0],loc[1]) , (loc[2],loc[3]) , [255,0,0] , 1 )
+            else:
+                cv2.line(img, (loc[0],loc[1]) , (loc[2],loc[3]) , [0,0,255] , 1 )
     except:
         print("no lines found")
 
@@ -97,18 +101,26 @@ def draw_lanes(img, lines):
         lms = [] #left slopes
         medRm = 0 #median right slope
         medLm = 0 #median left slope
-        for line in right_lines:
-            rms.append(line[0])
-        medRm = median(rms)
-        for line in left_lines:
-            lms.append(line[0])
-        medLm = median(lms)
+        try:
+            for line in right_lines:
+                rms.append(line[0])
+            medRm = median(rms)
+            print("Right Median: ", medRm)
+        except:
+            print("No Right Lines")
+        try:
+            for line in left_lines:
+                lms.append(line[0])
+            medLm = median(lms)
+            print("Left Median: ", medLm)
+        except:
+            print("No Left Lines")
 
         # remove outliers 
-        maxRm = medRm + (medRm*0.1) # max and min left and right slopes
-        minRm = medRm - (medRm*0.1)
-        maxLm = medLm - (medLm*0.1)
-        minLm = medLm + (medLm*0.1)
+        maxRm = medRm + (medRm*0.01) # max and min left and right slopes
+        minRm = medRm - (medRm*0.01)
+        maxLm = medLm - (medLm*0.01)
+        minLm = medLm + (medLm*0.01)
         for i,line in enumerate(right_lines): # pop if out of range
             if line[0] > maxRm or line[0] < minRm:
                 right_lines.pop(i)
@@ -119,31 +131,37 @@ def draw_lanes(img, lines):
 
         # find max Xs and Ys to use as lane
         ##right lane
-        Rxs = []
-        Rys = []
-        for line in right_lines:
-            Rxs.append(line[2])
-            Rxs.append(line[4])
-            Rys.append(line[3])
-            Rys.append(line[5])
-        maxRx = max(Rxs)
-        maxRy = max(Rys)
-        minRx = min(Rxs)
-        minRy = min(Rys)
-        laneR = [minRx,minRy,maxRx,maxRy]
+        try:
+            Rxs = []
+            Rys = []
+            for line in right_lines:
+                Rxs.append(line[2])
+                Rxs.append(line[4])
+                Rys.append(line[3])
+                Rys.append(line[5])
+            maxRx = max(Rxs)
+            maxRy = max(Rys)
+            minRx = min(Rxs)
+            minRy = min(Rys)
+            laneR = [minRx,minRy,maxRx,maxRy]
+        except:
+            print("Final Right Lane")
         ##left lane
-        Lxs = []
-        Lys = []
-        for line in left_lines:
-            Lxs.append(line[2])
-            Lxs.append(line[4])
-            Lys.append(line[3])
-            Lys.append(line[5])
-        maxLx = max(Lxs)
-        maxLy = max(Lys)
-        minLx = min(Lxs)
-        minLy = min(Lys)
-        laneL = [minLx,maxLy,maxLx,minLy]
+        try:
+            Lxs = []
+            Lys = []
+            for line in left_lines:
+                Lxs.append(line[2])
+                Lxs.append(line[4])
+                Lys.append(line[3])
+                Lys.append(line[5])
+            maxLx = max(Lxs)
+            maxLy = max(Lys)
+            minLx = min(Lxs)
+            minLy = min(Lys)
+            laneL = [minLx,maxLy,maxLx,minLy]
+        except:
+            print("Final Left Lane")
 
         # for i in line_dict:
         #     print("#",i,": ",line_dict[i][0])
@@ -152,9 +170,10 @@ def draw_lanes(img, lines):
         #     print(m)
 
         return laneR, laneL
-    except:
+    except Exception as e:
+        print("Draw_lanes: ", str(e))
         return [0,0,0,0],[0,0,0,0]
-        print("no lines")
+        
 
 def process_img(img):
     #processedImg = img
@@ -182,13 +201,18 @@ def process_img(img):
     maxLineGap = 15  #15
     lines = cv2.HoughLinesP(imgroi, 1, np.pi/180, 180, minLineLength, maxLineGap)
     draw_lines(img,lines)
-    lane1 = [0,0,0,0]
-    lane2 = [0,0,0,0]
     lane1,lane2 = draw_lanes(img,lines)
-    #right
-    cv2.line(img,(lane1[0],lane1[1]),(lane1[2],lane1[3]),[255,0,200], 3)
-    #left
-    cv2.line(img,(lane2[0],lane2[1]),(lane2[2],lane2[3]),[255,0,100], 3)
+    try:
+        #right
+        cv2.line(img,(lane1[0],lane1[1]),(lane1[2],lane1[3]),[0,255,255], 3)
+    except:
+        print("No Right Lane to print: main()")
+    try:
+        #left
+        cv2.line(img,(lane2[0],lane2[1]),(lane2[2],lane2[3]),[255,0,100], 3)
+    except:
+        print("No Left Lane to print: main()")
+    
 
     cv2.imshow("graybulr",blur)
     cv2.imshow("Canny Edges", imgedges)
