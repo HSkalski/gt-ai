@@ -5,7 +5,6 @@ import time
 import random as rand
 from statistics import median
 from statistics import mean
-import pyautogui as keys
 from directkeys import PressKey,ReleaseKey, W, A, S, D
 
 monitor = {"top": 40, "left": 0, "width": 800, "height": 640}
@@ -33,7 +32,7 @@ def main():
         processedImg,lane1,lane2 = process_img(img,lane1,lane2,lanes1,lanes2)
         
         direction = the_way(processedImg, lane1,lane2)
-        move(direction)
+        #move(direction)
         #cv2.imshow("Processed IMG", processedImg)
         cv2.imshow("Original IMG", img)
         end = time.time()
@@ -280,9 +279,9 @@ def the_way(img,lane1,lane2):
         #print("INTERSECTION POINT: ", inter)
         cv2.line(img, (inter,0),(inter,640),[0,0,0],4)
         middle = int(monitor["width"]/2)
-        if inter > middle+50: # intersection on right
+        if inter > middle+100: # intersection on right
             return 1
-        elif inter < middle-50: # intersection on left
+        elif inter < middle-100: # intersection on left
             return 2
         else:
             return 0
@@ -295,22 +294,23 @@ def the_way(img,lane1,lane2):
     return 0
 
 def move(direction):
-    keys.keyUp('a')
-    keys.keyUp('d')
-
     if direction == 1:
         PressKey(D)
         ReleaseKey(A)
         ReleaseKey(W)
+        #time.sleep(0.1)
+        #ReleaseKey(D)
         print("GO RIGHT")
     elif direction == 2:
         PressKey(A)
         ReleaseKey(D)
         ReleaseKey(W)
+        #time.sleep(0.1)
+        #ReleaseKey(A)
         print("GO LEFT")
         #keys.keyDown('a')
     else:
-        PressKey(W)
+    #     PressKey(W)
         ReleaseKey(A)
         ReleaseKey(D)
 
@@ -326,7 +326,7 @@ def process_img(img,lane1,lane2,lanes1,lanes2):
     #Blur
     blur = cv2.blur(imgedges,(5,5))
     #region of interest
-    points = [[10,600],[10,450],[350,250],[450,250],[790,450],[790,600]]
+    points = [[10,450],[10,350],[350,270],[450,270],[790,350],[790,450]]
 
 
     roiVertices = np.array([points[0],points[1], points[2], points[3], points[4], points[5]], np.int32)
