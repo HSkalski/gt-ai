@@ -275,7 +275,7 @@ def process_img(img,lane1,lane2):
 
     roiVertices = np.array([points[0],points[1], points[2], points[3], points[4], points[5]], np.int32)
 
-    #imgroi = roi(blur, [vertices])
+    #imgroi = roi(blur, [qvertices])
     imgCrop = region_of_interest(blur,[roiVertices])
 
     cv2.line(img, (points[0][0],points[0][1]),(points[1][0],points[1][1]), [0,255,0], 3)
