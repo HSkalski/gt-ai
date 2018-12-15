@@ -1,11 +1,12 @@
 import cv2
 import numpy as np 
 import mss 
+import time
 import random as rand
 from statistics import median
 from statistics import mean
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+import pyautogui as keys
+from directkeys import PressKey,ReleaseKey, W, A, S, D
 
 monitor = {"top": 40, "left": 0, "width": 800, "height": 640}
 sct = mss.mss()
@@ -23,11 +24,21 @@ cv2.createTrackbar('b','Canny Edges',0,1000,nothing)
 def main():
     lane1 = [0,0]
     lane2 = [0,0]   
+    lanes1 = []
+    lanes2 = []
+
     while 1:
+        start = time.time()
         img = screen_grab()
-        processedImg,lane1,lane2 = process_img(img,lane1,lane2)
-        cv2.imshow("Original IMG", img)
+        processedImg,lane1,lane2 = process_img(img,lane1,lane2,lanes1,lanes2)
+        
+        direction = the_way(processedImg, lane1,lane2)
+        move(direction)
         #cv2.imshow("Processed IMG", processedImg)
+        cv2.imshow("Original IMG", img)
+        end = time.time()
+        deltaT=end-start
+        print("Framerate: ", 1/deltaT)
         if cv2.waitKey(25) & 0xFF == ord('q'): #if pressing q 
             cv2.destroyAllWindows()
             break
@@ -87,6 +98,11 @@ def Yint(line):
     y = -x1*m+y1
     return y
 
+def intersect(lane1,lane2):
+    return -1*int((lane2[1]-lane1[1])/(lane2[0]-lane1[0]))
+
+    
+
 def draw_lanes(img, lines):
     try:
         line_dict = {}
@@ -121,14 +137,14 @@ def draw_lanes(img, lines):
             for line in right_lines:
                 rms.append(line[0])
             medRm = median(rms)
-            print("Right Slope Median: ", medRm)
+            #print("Right Slope Median: ", medRm)
         except:
             print("No Right Lines")
         try:
             for line in left_lines:
                 lms.append(line[0])
             medLm = median(lms)
-            print("Left Slope Median: ", medLm)
+            #print("Left Slope Median: ", medLm)
         except:
             print("No Left Lines")
         # remove outliers (slope)
@@ -151,18 +167,18 @@ def draw_lanes(img, lines):
             for line in right_lines:
                 rint.append(line[1])
             medRint = median(rint)
-            print("Right Intercept Median: ", medRint)
+            #print("Right Intercept Median: ", medRint)
         except:
             print("No Right Lines")
         try:
             for line in left_lines:
                 lint.append(line[1])
             medLint = median(lint)
-            print("Left Intercept Median: ", medLint)
+            #print("Left Intercept Median: ", medLint)
         except:
             print("No Left Lines")
-        print("Right Len pre int: ", len(right_lines))
-        print("Left Len pre int: ", len(left_lines))
+        #print("Right Len pre int: ", len(right_lines))
+        #print("Left Len pre int: ", len(left_lines))
         #remove outliers (intercept)
         maxRint = medRint + (medRint*0.01) # max and min left and right intercepts
         minRint = medRint - (medRint*0.01)
@@ -183,14 +199,14 @@ def draw_lanes(img, lines):
             for line in right_lines:
                 avgRms.append(line[0])
             avgRm = mean(avgRms)
-            print("Right Average Slope: ", avgRm)
+            #print("Right Average Slope: ", avgRm)
         except:
             pass
         try:
             for line in left_lines:
                 avgLms.append(line[0])
             avgLm = mean(avgLms)
-            print("Left Average Slope: ", avgLm)
+            #print("Left Average Slope: ", avgLm)
         except:
             pass
         # Average of remaining lines - intercept
@@ -202,28 +218,28 @@ def draw_lanes(img, lines):
             for line in right_lines:
                 avgRints.append(line[1])
             avgRint = median(avgRints)
-            print("Right Average Slope: ", avgRint)
+            #print("Right Average Slope: ", avgRint)
         except:
             pass
         try:
             for line in left_lines:
                 avgLints.append(line[1])
             avgLint = median(avgLints)
-            print("Left Average Slope: ", avgLint)
+            #print("Left Average Slope: ", avgLint)
         except:
             pass
         ######################
-        print("Right Len: ", len(right_lines))
-        print("Left Len: ", len(left_lines))
-        try:
-            print("Left lines:")
-            for i in left_lines:
-                print("Left Line: ",i)
-            print("right lines:")
-            for i in right_lines:
-                print("Right Line: ",i)
-        except:
-            pass
+        #print("Right Len: ", len(right_lines))
+        #print("Left Len: ", len(left_lines))
+       # try:
+            #print("Left lines:")
+            #for i in left_lines:
+                #print("Left Line: ",i)
+            #print("right lines:")
+            #for i in right_lines:
+                #print("Right Line: ",i)
+       # except:
+       #     pass
         
         try:
             for loc in left_lines:
@@ -247,7 +263,7 @@ def draw_lanes(img, lines):
             laneL = [avgLm,avgLint]
         except:
             print("Final Left Lane")
-        print("Return: ",laneR,laneL)
+        #print("Return: ",laneR,laneL)
         if laneR == []:
             laneR = [0,0]
         if laneL == []:
@@ -257,9 +273,49 @@ def draw_lanes(img, lines):
     except Exception as e:
         print("Draw_lanes: ", str(e))
         return [0,0],[0,0]
+
+def the_way(img,lane1,lane2):
+    try:
+        inter = intersect(lane1,lane2)
+        #print("INTERSECTION POINT: ", inter)
+        cv2.line(img, (inter,0),(inter,640),[0,0,0],4)
+        middle = int(monitor["width"]/2)
+        if inter > middle+50: # intersection on right
+            return 1
+        elif inter < middle-50: # intersection on left
+            return 2
+        else:
+            return 0
         
 
-def process_img(img,lane1,lane2):
+
+    except Exception as e:
+        print("The_way: ", str(e))
+    
+    return 0
+
+def move(direction):
+    keys.keyUp('a')
+    keys.keyUp('d')
+
+    if direction == 1:
+        PressKey(D)
+        ReleaseKey(A)
+        ReleaseKey(W)
+        print("GO RIGHT")
+    elif direction == 2:
+        PressKey(A)
+        ReleaseKey(D)
+        ReleaseKey(W)
+        print("GO LEFT")
+        #keys.keyDown('a')
+    else:
+        PressKey(W)
+        ReleaseKey(A)
+        ReleaseKey(D)
+
+
+def process_img(img,lane1,lane2,lanes1,lanes2):
     #processedImg = img
     
     #grayscale
@@ -270,7 +326,7 @@ def process_img(img,lane1,lane2):
     #Blur
     blur = cv2.blur(imgedges,(5,5))
     #region of interest
-    points = [[10,500],[10,400],[350,200],[450,200],[790,400],[790,500]]
+    points = [[10,600],[10,450],[350,250],[450,250],[790,450],[790,600]]
 
 
     roiVertices = np.array([points[0],points[1], points[2], points[3], points[4], points[5]], np.int32)
@@ -284,7 +340,6 @@ def process_img(img,lane1,lane2):
     cv2.line(img, (points[3][0],points[3][1]),(points[4][0],points[4][1]), [0,255,0], 3)
     cv2.line(img, (points[4][0],points[4][1]),(points[5][0],points[5][1]), [0,255,0], 3)
     cv2.line(img, (points[5][0],points[5][1]),(points[0][0],points[0][1]), [0,255,0], 3)
-
     #Lines
     minLineLength = 30 # 20
     maxLineGap = 15  #15
@@ -295,26 +350,47 @@ def process_img(img,lane1,lane2):
         lane1 = newlane1
     if newlane2 != [0,0]:
         lane2 = newlane2
-
+    lanes1.append(lane1)
+    lanes2.append(lane2)
+    if len(lanes1) > 10:
+        lanes1.pop(0)
+    if len(lanes2) > 10:
+        lanes2.pop(0)
+    lanes1ms = []
+    lanes1bs = []
+    for lane in lanes1:
+        lanes1ms.append(lane[0])
+        lanes1bs.append(lane[1])
+    lanes2ms = []
+    lanes2bs = []
+    for lane in lanes2:
+        lanes2ms.append(lane[0])
+        lanes2bs.append(lane[1])
+    avgLanes1 = []
+    avgLanes2 = []
+    avgLanes1.append(mean(lanes1ms))
+    avgLanes1.append(mean(lanes1bs))
+    avgLanes2.append(mean(lanes2ms))
+    avgLanes2.append(mean(lanes2bs))
     
-    print("------------------------")
-    print(lane1)
-    print(lane2)
-    print(newlane1)
-    print(newlane2)
-    print("------------------------")
+    # print("------------------------")
+    # print(lane1)
+    # print(lane2)
+    # print(newlane1)
+    # print(newlane2)
+    # print("------------------------")
     try:
         #right
         #cv2.line(img,(lane1[0],lane1[1]),(lane1[2],lane1[3]),[0,255,255], 3)
         #temporary
-        draw_eq(img,lane1)
+        draw_eq(img,avgLanes1)
     except:
         print("No new Right Lane to print: main()")
     try:
         #left
         #cv2.line(img,(lane2[0],lane2[1]),(lane2[2],lane2[3]),[255,0,100], 3)
         #temporary
-        draw_eq(img,lane2)
+        draw_eq(img,avgLanes2)
     except:
         print("No new Left Lane to print: main()")
     
@@ -323,6 +399,6 @@ def process_img(img,lane1,lane2):
     cv2.imshow("Canny Edges", imgedges)
     cv2.imshow("Region of Interest", imgCrop)
     #return processedImg
-    return img, lane1, lane2
-
+    return img, avgLanes1, avgLanes2
+    
 main()
